@@ -13,3 +13,14 @@ colored = "2.0"
 walkdir = "2.3"
 clap = "3.0"
 itertools = "0.10.1"
+rand = "0.8.5"
+indicatif = "0.16"
+log = "0.4"
+env_logger = "0.9"
+leaky-bucket = "1.1.2"
+futures = "0.3.30"
+thiserror = "1.0.63"
+chrono = "0.4.38"
+
+[package.metadata.scripts]
+format = ["cargo fmt --all"]

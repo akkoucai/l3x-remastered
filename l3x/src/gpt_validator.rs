@@ -1,37 +1,39 @@
+use crate::error::MyError;
+use crate::utils::send_request_with_retries;
+use leaky_bucket::RateLimiter;
+use log::warn;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 
+#[derive(Clone)]
 pub struct OpenAICreds {
     pub api_key: String,
-    pub org_id: Option<String>,
-    pub project_id: Option<String>,
 }
 
 #[derive(Serialize)]
-struct ChatRequest {
+pub struct ChatRequest {
     model: String,
     messages: Vec<Message>,
 }
 
 #[derive(Serialize)]
-struct Message {
+pub struct Message {
     role: String,
     content: String,
 }
 
 #[derive(Deserialize)]
-struct ChatResponse {
+pub struct ChatResponse {
     choices: Vec<Choice>,
 }
 
 #[derive(Deserialize)]
-struct Choice {
+pub struct Choice {
     message: MessageContent,
 }
 
 #[derive(Deserialize)]
-struct MessageContent {
+pub struct MessageContent {
     content: String,
 }
 
@@ -42,7 +44,8 @@ pub async fn validate_vulnerabilities_with_gpt(
     language: &str,
     validate_all_severities: bool,
     model: &str,
-) -> Result<(String, String), Box<dyn Error>> {
+    rate_limiter: &RateLimiter,
+) -> Result<(String, String), MyError> {
     let client = Client::new();
 
     let mut findings_list = String::new();
@@ -54,14 +57,14 @@ pub async fn validate_vulnerabilities_with_gpt(
 
     let prompt = match language {
         "Rust" => format!(
-            "A SAST tool detects potential Rust vulnerabilities in the following file:\n\nSource code:\n{}\n\nFindings list:\n{}\n\nAre these valid vulnerabilities or false positives? Provide an explanation.",
+            "A Static Application Security Testing (SAST) tool has identified potential vulnerabilities in a Rust code file. Below are the details:\n\nSource code:\n{}\n\nList of detected vulnerabilities:\n{}\n\nFor each finding, determine if it is a valid vulnerability or a false positive. Provide a detailed explanation for your assessment and suggest any necessary fixes or improvements. Consider aspects like unsafe code usage, unhandled errors, unchecked arithmetic, and any potential security risks.",
             file_content, findings_list
         ),
         "Solidity-Ethereum" => format!(
-            "A SAST tool detects potential Solidity vulnerabilities in the following file:\n\nSource code:\n{}\n\nFindings list:\n{}\n\nAre these valid vulnerabilities or false positives? Provide an explanation.",
+            "A Static Application Security Testing (SAST) tool has identified potential vulnerabilities in a Solidity code file. Below are the details:\n\nSource code:\n{}\n\nList of detected vulnerabilities:\n{}\n\nFor each finding, determine if it is a valid vulnerability or a false positive. Provide a detailed explanation for your assessment and suggest any necessary fixes or improvements. Consider aspects like reentrancy attacks, unchecked sends, and any potential security risks.",
             file_content, findings_list
         ),
-        _ => return Err(Box::new(std::io::Error::new(std::io::ErrorKind::InvalidInput, "Unsupported language"))),
+        _ => return Err(MyError::custom("Unsupported language")),
     };
 
     let chat_request = ChatRequest {
@@ -72,81 +75,66 @@ pub async fn validate_vulnerabilities_with_gpt(
         }],
     };
 
-    let mut response = client
-        .post("https://api.openai.com/v1/chat/completions")
-        .header("Content-Type", "application/json")
-        .header("Authorization", format!("Bearer {}", openai_creds.api_key));
-    if let Some(org) = &openai_creds.org_id {
-        response = response.header("OpenAI-Organization", org);
-    }
-    if let Some(project) = &openai_creds.project_id {
-        response = response.header("OpenAI-Project", project);
-    }
-    let response = response.json(&chat_request).send().await?;
+    let response = send_request_with_retries(
+        &client,
+        &openai_creds,
+        &chat_request,
+        10, // Maximum number of retries
+        rate_limiter,
+    )
+    .await
+    .map_err(|e| {
+        warn!("Failed to send request to OpenAI: {}", e);
+        MyError::custom("Failed to send request to OpenAI")
+    })?;
 
-    if response.status().is_success() {
-        let chat_response = response.json::<ChatResponse>().await?;
-        let text = chat_response
-            .choices
-            .get(0)
-            .map_or_else(|| "", |choice| &choice.message.content);
+    let text = response
+        .choices
+        .get(0)
+        .map_or_else(|| "", |choice| &choice.message.content);
 
-        let status = analyze_response_text(&text);
+    let status = analyze_response_text(&text);
 
-        Ok((status.to_string(), "".to_string()))
-    } else {
-        Err(Box::new(std::io::Error::new(
-            std::io::ErrorKind::Other,
-            "Failed to get a valid response from OpenAI",
-        )))
-    }
+    Ok((status.to_string(), text.to_string()))
 }
 
 fn analyze_response_text(text: &str) -> &str {
-    if text.contains("not a vulnerability")
-        || text.contains("is not a valid vulnerability")
-        || text
-            .to_lowercase()
-            .contains("appears to be a false positive")
-        || text.to_lowercase().contains("is no vulnerability present")
-        || text.to_lowercase().contains("is a false positive")
-        || text.to_lowercase().contains("likely a false positive")
-        || text.to_lowercase().contains("may be a false positive")
-        || text.to_lowercase().contains("seems to be a false positive")
-        || text.to_lowercase().contains("most likely a false positive")
-        || text
-            .to_lowercase()
-            .contains("does not contain a vulnerability")
-        || text
-            .to_lowercase()
-            .contains("not appear to have a potential vulnerability")
-        || text
-            .to_lowercase()
-            .contains("does not seem to have any obvious vulnerability")
-        || text
-            .to_lowercase()
-            .contains("does not introduce a vulnerability")
-        || text
-            .to_lowercase()
-            .contains("not suggest any security issues")
-        || text
-            .to_lowercase()
-            .contains("does not appear to be vulnerable")
-        || text
-            .to_lowercase()
-            .contains("does not appear to have any clear vulnerability")
-        || text
-            .to_lowercase()
-            .contains("does not appear to have any potential vulnerability")
-        || text.to_lowercase().contains("is not valid in this case")
-        || text.to_lowercase().contains("does not appear to be valid")
-        || text
-            .to_lowercase()
-            .contains("does not appear to contain any potential vulnerability")
-        || text.is_empty()
+    let lower_text = text.to_lowercase();
+
+    let false_positive_indicators = vec![
+        "not a vulnerability",
+        "is not a valid vulnerability",
+        "false positive",
+        "no vulnerability",
+        "not valid",
+        "does not contain a vulnerability",
+        "does not appear to have any obvious vulnerability",
+        "no security issue",
+        "safe",
+    ];
+
+    let valid_vulnerability_indicators = vec![
+        "is a valid vulnerability",
+        "is indeed a vulnerability",
+        "poses a security risk",
+        "can be exploited",
+        "vulnerable",
+        "needs to be addressed",
+        "security issue",
+        "security risk",
+    ];
+
+    if false_positive_indicators
+        .iter()
+        .any(|&indicator| lower_text.contains(indicator))
     {
         "False positive"
-    } else {
+    } else if valid_vulnerability_indicators
+        .iter()
+        .any(|&indicator| lower_text.contains(indicator))
+    {
         "Valid"
+    } else {
+        "Unknown"
     }
 }

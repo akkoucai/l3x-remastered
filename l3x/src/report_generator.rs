@@ -1,5 +1,5 @@
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-use serde::{Serialize, Deserialize};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FinalReport {
@@ -48,26 +48,32 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
         _ => 5,
     };
 
-    let (mut valid_vulnerabilities, mut invalid_vulnerabilities): (Vec<_>, Vec<_>) = report.vulnerabilities_details
+    let (mut valid_vulnerabilities, mut invalid_vulnerabilities): (Vec<_>, Vec<_>) = report
+        .vulnerabilities_details
         .iter()
         .partition(|v| v.status == "Valid");
 
-    valid_vulnerabilities.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
-    invalid_vulnerabilities.sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
+    valid_vulnerabilities
+        .sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
+    invalid_vulnerabilities
+        .sort_by(|a, b| severity_order(&a.severity).cmp(&severity_order(&b.severity)));
 
-    let sorted_vulnerabilities = valid_vulnerabilities.into_iter().chain(invalid_vulnerabilities.into_iter());
+    let sorted_vulnerabilities = valid_vulnerabilities
+        .into_iter()
+        .chain(invalid_vulnerabilities.into_iter());
 
-    let vulnerabilities_html = sorted_vulnerabilities.map(|v| {
-        let status_icon = if v.status == "Valid" {
-            "🟢 GPT 3.5/4"
-        } else if v.status == "False positive" {
-            "🔴 GPT 3.5/4"
-        } else {
-            "-"
-        };
+    let vulnerabilities_html = sorted_vulnerabilities
+        .map(|v| {
+            let status_icon = if v.status == "Valid" {
+                "🟢 GPT 3.5/4"
+            } else if v.status == "False positive" {
+                "🔴 GPT 3.5/4"
+            } else {
+                "-"
+            };
 
-        format!(
-            "<tr>
+            format!(
+                "<tr>
                 <td>{}</td>
                 <td>{}</td>
                 <td>{}</td>
@@ -77,20 +83,33 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
                 <td>{}</td>
                 <td>{}</td>
             </tr>",
-            v.vulnerability_id, v.title, status_icon, v.severity, v.file, "Line", v.line_number, v.description, v.fix
-        )
-    }).collect::<String>();
+                v.vulnerability_id,
+                v.title,
+                status_icon,
+                v.severity,
+                v.file,
+                "Line",
+                v.line_number,
+                v.description,
+                v.fix
+            )
+        })
+        .collect::<String>();
 
-    let safe_patterns_html = report.safe_patterns_overview.iter().map(|p| {
-        format!(
-            "<tr>
+    let safe_patterns_html = report
+        .safe_patterns_overview
+        .iter()
+        .map(|p| {
+            format!(
+                "<tr>
                 <td>{}</td>
                 <td>{}</td>
                 <td>{}</td>
             </tr>",
-            p.pattern_id, p.title, p.safe_pattern
-        )
-    }).collect::<String>();
+                p.pattern_id, p.title, p.safe_pattern
+            )
+        })
+        .collect::<String>();
 
     let mut severity_count = HashMap::new();
     let mut total_valid = 0;
