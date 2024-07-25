@@ -1,12 +1,13 @@
+use pulldown_cmark::{html, Options, Parser};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
-
 #[derive(Serialize, Deserialize, Debug)]
 pub struct FinalReport {
     pub security_analysis_summary: SecurityAnalysisSummary,
     pub vulnerabilities_details: Vec<VulnerabilityResult>,
     pub safe_patterns_overview: Vec<SafePatternDetail>,
     pub model: String,
+    pub summary: String, // Add summary field
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -28,6 +29,7 @@ pub struct VulnerabilityResult {
     pub fix: String,
     pub persistence_of_safe_pattern: String,
     pub safe_pattern: Option<String>,
+    pub explanation: Option<String>, // Add explanation field
 }
 
 #[derive(Serialize, Deserialize, Debug, Default)]
@@ -82,6 +84,7 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
                 <td>{}: {}</td>
                 <td>{}</td>
                 <td>{}</td>
+                <td>{}</td>  <!-- Add explanation column -->
             </tr>",
                 v.vulnerability_id,
                 v.title,
@@ -91,7 +94,8 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
                 "Line",
                 v.line_number,
                 v.description,
-                v.fix
+                v.fix,
+                v.explanation.clone().unwrap_or_else(|| "-".to_string()) // Add explanation
             )
         })
         .collect::<String>();
@@ -166,6 +170,12 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
     .charts-wrapper {{
         text-align: center;
     }}
+    .markdown-summary {{
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }}
 </style>
 </head>
 <body>
@@ -177,6 +187,9 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
     </header>
     <section>
     <h2>Summary</h2>
+    <div class='markdown-summary'>
+        {summary}
+    </div>
     <div class='chart-container'>
         <h3>By Severity</h3>
         <canvas id='severityChart'></canvas>
@@ -185,7 +198,7 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
         <h3>False Positive Rate</h3>
         <canvas id='falsePositiveChart'></canvas>
     </div>
-</section>      
+</section>
     <section>
         <h2>Vulnerabilities</h2>
         <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
@@ -201,6 +214,7 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
                 <th>Line number</th>
                 <th>Description</th>
                 <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
             </tr>
             {vulnerabilities_html}
         </table>
@@ -223,7 +237,7 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
 
         var severityCtx = document.getElementById('severityChart').getContext('2d');
         var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
-        
+
         new Chart(severityCtx, {{
             type: 'bar',
             data: {{
@@ -271,8 +285,17 @@ pub fn generate_html_report(report: &FinalReport, language: &str) -> String {
         report_model = report.model,
         vulnerabilities_html = vulnerabilities_html,
         safe_patterns_html = safe_patterns_html,
+        summary = markdown_to_html(&report.summary), // Convert markdown summary to HTML
         severity_count_json = severity_count_json,
         total_valid = total_valid,
         total_invalid = total_invalid
     )
+}
+
+fn markdown_to_html(markdown: &str) -> String {
+    let options = pulldown_cmark::Options::empty();
+    let parser = pulldown_cmark::Parser::new_ext(markdown, options);
+    let mut html_output = String::new();
+    pulldown_cmark::html::push_html(&mut html_output, parser);
+    html_output
 }

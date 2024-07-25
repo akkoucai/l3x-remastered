@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: gpt-4o-mini-2024-07-18</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            <tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>../../sharky/sharky/program/programs/sharky/src/instructions/update_nft_list.rs</td>
+                <td>Line: 17</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>The RUST021 warning indicates that there are potentially unsafe or unchecked operations occurring—the use of raw indexing on arrays. Rust's safety guarantees are based on compile-time checks, but here you're manually calculating indices for array slicing. This calculation can easily lead to buffer overflows, especially if the `mint` values and indices are influenced by external inputs, like the `mints` vector. Because raw pointer manipulation can introduce vulnerabilities in low-level operations, Rust emphasizes the need for robust checks before accessing slices.
+Fix:
+In addition to the bounds check proposed above for `RUST003`, it would be beneficial to ensure that the `mints` vector itself is not empty and conforms to the expected structure. Thus, adding bounds-checking before the loop where slice access occurs is important.
+
+Code snippet update:
+```rust
+for UpdateIndex { index, mint } in mints {
+    if index >= (data.len() / 32) as u32 {
+        return Err(ErrorCode::IndexOutOfBounds.into());
+    }
+    data[size + index as usize * 32..size + index as usize * 32 + 32]
+        .copy_from_slice(mint.as_ref());
+}
+```
+
+In this manner, the code is made safer against out-of-bounds access and unchecked operations, which in turn align with Rust’s emphasis on memory safety.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>../../sharky/sharky/program/programs/sharky/src/instructions/update_nft_list.rs</td>
+                <td>Line: 17</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>The vulnerability RUST003 indicates a potential for an index out of bounds error. In the code on line 17, the operation attempts to access a slice of the `data` array using computed indices: `ctx.accounts.nft_list.data_size() + index as usize * 32..][..32]`. If `index` is sufficiently large such that the computed index exceeds the bounds of the `data` slice, it may lead to accessing out-of-bounds memory, which can cause a panic at runtime. To mitigate this, we should explicitly check that `index` and the resulting slice range do not exceed the bounds of `data`.
+Fix:
+```rust
+let size = ctx.accounts.nft_list.data_size();
+if index >= (data.len() / 32) as u32 {
+    return Err(ErrorCode::IndexOutOfBounds.into());
+}
+```
+
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>-</td>
+                <td>Medium</td>
+                <td>../../sharky/sharky/program/programs/sharky/src/errors.rs</td>
+                <td>Line: 3</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>The detected vulnerability, labeled as "Rust-Solana007," likely relates to the usage of custom error types in a manner that could introduce ambiguity in error handling or lead to poor maintainability of the code. In this case, the comment in the code explicitly states, "Ideally you should not use Custom and instead add a new error type if necessary." 
+Using a generic error type like `Custom` can obscure the actual error context, making debugging and error handling more challenging. When consumers of this error type encounter a `Custom` error, they may not have sufficient information to determine what went wrong or how to respond effectively.
+
+To improve error handling and make the codebase clearer for developers, it would be beneficial to replace the `Custom` error with more specific error types that convey detailed information about various failure scenarios. This will also enhance the maintainability of the code, as future developers will better understand the purpose of each error without needing to refer back to documentation extensively.
+
+Suggested Fix:  
+- Remove the `Custom` error type.
+- Implement additional specific error types as needed to capture various scenarios. This will ensure that every possible error condition has a clear and descriptive error variant.
+
+For example, instead of having a `Custom` error, consider something like:
+
+```rust
+#[error_code]
+pub enum ErrorCode {
+    #[msg("Unknown error occurred")]
+    UnknownError,
+    // Define other specific error types here as needed
+}
+```
+
+This would provide clarity on what went wrong, allowing for better logging and debugging when issues arise in the application.
+</td>  <!-- Add explanation column -->
+            </tr>
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            <tr>
+                <td>VULN003</td>
+                <td>[Rust-Solana] Inaccurate Calculation Results</td>
+                <td>\.checked_(add|sub|mul|div)\(</td>
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>\.checked_add\(|\.checked_sub\(|\.checked_mul\(|\.checked_div\(</td>
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>\.checked_add\(|\.checked_sub\(|\.checked_mul\(|\.checked_div\(</td>
+            </tr>
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{"Medium":1,"High":1}');
+        var totalValid = 2;
+        var totalInvalid = 0;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

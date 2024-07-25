@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: gpt-4o-mini-2024-07-18</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            <tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>-</td>
+                <td>Medium</td>
+                <td>../../sharky/sharky/program/programs/sharky/src/errors.rs</td>
+                <td>Line: 3</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>The finding indicates that the use of a generic error type (Custom) in your `ErrorCode` enum is not a recommended practice. In specific settings, particularly in Rust/Solana development, it is generally better to define distinct and meaningful error types that provide more context. Using a generic "Custom" message can obscure the source of the error and make debugging and error handling more challenging. It is important to have clear error definitions that can aid in identifying specific issues and responding appropriately in the code.
+### Suggested Fix:
+Replace the generic `Custom` error type with a more specific error variant that accurately reflects the intended error scenario. For instance, if the intention was to handle an unknown error condition, it might be better to name it `UnknownError` or define an error that captures the nature of the error more specifically. Here's how you might refactor the code:
+
+```rust
+#[error_code]
+pub enum ErrorCode {
+    // Removed generic Custom error type
+    #[msg("Unknown error occurred")]
+    UnknownError,  // More specific error message
+    #[msg("InvalidArgument")]
+    InvalidArgument,
+    #[msg("InvalidAccountData")]
+    InvalidAccountData,
+    #[msg("IllegalOwner")]
+    IllegalOwner,
+    #[msg("Mint is invalid")]
+    InvalidMint,
+    #[msg("Numerical overflow error")]
+    NumericalOverflowError,
+    #[msg("Mismatched NFT collateral mint")]
+    MismatchedNftCollateralMint,
+    #[msg("Mismatched value token mint")]
+    MismatchedValueTokenMint,
+    #[msg("Mismatched lender")]
+    MismatchedLender,
+    #[msg("Loan is not foreclosable")]
+    NotForeclosable,
+    #[msg("Fee calculation error")]
+    FeeCalculationError,
+    #[msg("Invalid book loan terms type")]
+    InvalidBookLoanTermsType,
+    #[msg("Invalid escrow bump")]
+    InvalidEscrowBump,
+    #[msg("Invalid loan version")]
+    InvalidLoanVersion,
+    #[msg("Value mint only supports native mint")]
+    InvalidValueMint,
+    #[msg("Offered loan cannot be foreclosed")]
+    OfferedLoanCannotBeForeclosed,
+}
+```
+
+This change enhances the clarity of your error handling and makes it easier for other developers (and for you in the future) to understand what went wrong when errors are encountered.
+</td>  <!-- Add explanation column -->
+            </tr>
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            <tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>\.checked_add\(|\.checked_sub\(|\.checked_mul\(|\.checked_div\(</td>
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>\.checked_add\(|\.checked_sub\(|\.checked_mul\(|\.checked_div\(</td>
+            </tr><tr>
+                <td>VULN003</td>
+                <td>[Rust-Solana] Inaccurate Calculation Results</td>
+                <td>\.checked_(add|sub|mul|div)\(</td>
+            </tr>
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{}');
+        var totalValid = 0;
+        var totalInvalid = 0;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

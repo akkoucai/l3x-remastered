@@ -88,6 +88,22 @@ async fn main() -> Result<(), MyError> {
     )
     .await?;
 
+    // Prepare data for summary generation
+    let findings_summary: Vec<(String, Vec<VulnerabilityResult>)> = results_by_language
+        .iter()
+        .map(|(language, (_, vulnerabilities_details, _))| {
+            (language.clone(), vulnerabilities_details.clone())
+        })
+        .collect();
+
+    // Generate a summary of all findings
+    let summary = if no_validation {
+        "-".to_string()
+    } else {
+        gpt_validator::generate_summary(&openai_creds, &findings_summary, model, &rate_limiter)
+            .await?
+    };
+
     // Define the reports directory path
     let reports_dir = Path::new("reports");
 
@@ -114,6 +130,7 @@ async fn main() -> Result<(), MyError> {
             } else {
                 model.to_string()
             },
+            summary: summary.clone(), // Add summary here
         };
 
         let html_content = report_generator::generate_html_report(&report, &language);
@@ -283,11 +300,20 @@ async fn process_file(
             continue;
         }
 
-        // Skip import statements and function signatures
+        // Skip import statements, function signatures, and struct definitions
         if trimmed_line.starts_with("use ")
             || trimmed_line.starts_with("extern crate ")
             || trimmed_line.ends_with("-> Result<()> {")
+            || trimmed_line.ends_with("-> Self {")
+            || trimmed_line.starts_with("fn ")
+            || trimmed_line.ends_with("{")
+            || trimmed_line.ends_with("}")
         {
+            continue;
+        }
+
+        // Skip dereferencing operations
+        if trimmed_line.contains("::") || trimmed_line.contains("->") {
             continue;
         }
 
@@ -333,10 +359,22 @@ async fn process_file(
         }
     }
 
-    let status = if no_validation {
-        "-".to_string()
+    let findings_explanations = if no_validation {
+        findings_by_file
+            .iter()
+            .map(|(line, id, severity, _)| {
+                (
+                    line.clone(),
+                    id.clone(),
+                    severity.clone(),
+                    "".to_string(),
+                    "-".to_string(),
+                    "".to_string(),
+                )
+            })
+            .collect()
     } else {
-        let (status, _) = gpt_validator::validate_vulnerabilities_with_gpt(
+        gpt_validator::validate_vulnerabilities_with_gpt(
             &openai_creds,
             &findings_by_file,
             &file_content,
@@ -345,11 +383,12 @@ async fn process_file(
             &model,
             &rate_limiter,
         )
-        .await?;
-        status
+        .await?
     };
 
-    for (line_number, vulnerability_id, severity, suggested_fix) in findings_by_file {
+    for (line_number, vulnerability_id, severity, suggested_fix, assessment, explanation) in
+        findings_explanations
+    {
         vulnerabilities_details.push(VulnerabilityResult {
             vulnerability_id: vulnerability_id.clone(),
             file: path.to_string_lossy().to_string(),
@@ -361,7 +400,7 @@ async fn process_file(
                 .title
                 .clone(),
             severity,
-            status: status.clone(),
+            status: assessment,
             description: checks
                 .iter()
                 .find(|c| c.id == vulnerability_id)
@@ -371,10 +410,11 @@ async fn process_file(
             fix: suggested_fix,
             persistence_of_safe_pattern: "No".to_string(),
             safe_pattern: None,
+            explanation: Some(explanation),
         });
     }
 
-    pb.inc(1); // Update the progress bar after processing the file
+    pb.inc(1);
 
     Ok((
         language.to_string(),

@@ -21,6 +21,7 @@ leaky-bucket = "1.1.2"
 futures = "0.3.30"
 thiserror = "1.0.63"
 chrono = "0.4.38"
+pulldown-cmark = "0.9"
 
 [package.metadata.scripts]
 format = ["cargo fmt --all"]

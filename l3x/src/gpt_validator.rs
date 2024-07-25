@@ -1,10 +1,12 @@
 use crate::error::MyError;
+use crate::report_generator::VulnerabilityResult;
 use crate::utils::send_request_with_retries;
 use leaky_bucket::RateLimiter;
-use log::warn;
+use log::{debug, warn};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-
+use std::fs::OpenOptions;
+use std::io::Write;
 #[derive(Clone)]
 pub struct OpenAICreds {
     pub api_key: String,
@@ -45,7 +47,7 @@ pub async fn validate_vulnerabilities_with_gpt(
     validate_all_severities: bool,
     model: &str,
     rate_limiter: &RateLimiter,
-) -> Result<(String, String), MyError> {
+) -> Result<Vec<(usize, String, String, String, String, String)>, MyError> {
     let client = Client::new();
 
     let mut findings_list = String::new();
@@ -57,11 +59,11 @@ pub async fn validate_vulnerabilities_with_gpt(
 
     let prompt = match language {
         "Rust" => format!(
-            "A Static Application Security Testing (SAST) tool has identified potential vulnerabilities in a Rust code file. Below are the details:\n\nSource code:\n{}\n\nList of detected vulnerabilities:\n{}\n\nFor each finding, determine if it is a valid vulnerability or a false positive. Provide a detailed explanation for your assessment and suggest any necessary fixes or improvements. Consider aspects like unsafe code usage, unhandled errors, unchecked arithmetic, and any potential security risks.",
+            "A Static Application Security Testing (SAST) tool has identified potential vulnerabilities in a Rust code file. Below are the details:\n\nSource code:\n{}\n\nList of detected vulnerabilities:\n{}\n\nFor each finding, please indicate if it is a valid vulnerability or a false positive. Provide a detailed explanation for your assessment and suggest any necessary fixes or improvements. Format your response as follows and do not use markdown formatting:\nFinding: [finding details]\nAssessment: [Valid/False positive]\nExplanation: [detailed explanation]\n\n",
             file_content, findings_list
         ),
         "Solidity-Ethereum" => format!(
-            "A Static Application Security Testing (SAST) tool has identified potential vulnerabilities in a Solidity code file. Below are the details:\n\nSource code:\n{}\n\nList of detected vulnerabilities:\n{}\n\nFor each finding, determine if it is a valid vulnerability or a false positive. Provide a detailed explanation for your assessment and suggest any necessary fixes or improvements. Consider aspects like reentrancy attacks, unchecked sends, and any potential security risks.",
+            "A Static Application Security Testing (SAST) tool has identified potential vulnerabilities in a Solidity code file. Below are the details:\n\nSource code:\n{}\n\nList of detected vulnerabilities:\n{}\n\nFor each finding, please indicate if it is a valid vulnerability or a false positive. Provide a detailed explanation for your assessment and suggest any necessary fixes or improvements. Format your response as follows and do not use markdown formatting:\nFinding: [finding details]\nAssessment: [Valid/False positive]\nExplanation: [detailed explanation]\n\n",
             file_content, findings_list
         ),
         _ => return Err(MyError::custom("Unsupported language")),
@@ -92,49 +94,130 @@ pub async fn validate_vulnerabilities_with_gpt(
         .choices
         .get(0)
         .map_or_else(|| "", |choice| &choice.message.content);
+    // Log the OpenAI response
+    log_openai_response(file_content, findings_by_file, &text)?;
+    let findings_explanations = analyze_response_text(text);
+    let result = findings_by_file
+        .iter()
+        .zip(findings_explanations.into_iter())
+        .map(
+            |(
+                (line_number, vulnerability_id, severity, suggested_fix),
+                (assessment, explanation),
+            )| {
+                (
+                    *line_number,
+                    vulnerability_id.clone(),
+                    severity.clone(),
+                    suggested_fix.clone(),
+                    assessment,
+                    explanation,
+                )
+            },
+        )
+        .collect();
 
-    let status = analyze_response_text(&text);
-
-    Ok((status.to_string(), text.to_string()))
+    Ok(result)
 }
 
-fn analyze_response_text(text: &str) -> &str {
-    let lower_text = text.to_lowercase();
+fn log_openai_response(
+    file_content: &str,
+    findings_by_file: &[(usize, String, String, String)],
+    response_text: &str,
+) -> Result<(), std::io::Error> {
+    let log_file_path = "openai_responses.log";
+    let mut log_file = OpenOptions::new()
+        .append(true)
+        .create(true)
+        .open(log_file_path)?;
 
-    let false_positive_indicators = vec![
-        "not a vulnerability",
-        "is not a valid vulnerability",
-        "false positive",
-        "no vulnerability",
-        "not valid",
-        "does not contain a vulnerability",
-        "does not appear to have any obvious vulnerability",
-        "no security issue",
-        "safe",
-    ];
+    writeln!(log_file, "Analyzed file content:\n{}\n", file_content)?;
+    writeln!(log_file, "Findings:\n{:?}\n", findings_by_file)?;
+    writeln!(log_file, "OpenAI Response:\n{}\n", response_text)?;
 
-    let valid_vulnerability_indicators = vec![
-        "is a valid vulnerability",
-        "is indeed a vulnerability",
-        "poses a security risk",
-        "can be exploited",
-        "vulnerable",
-        "needs to be addressed",
-        "security issue",
-        "security risk",
-    ];
+    Ok(())
+}
+fn analyze_response_text(text: &str) -> Vec<(String, String)> {
+    let mut findings_explanations = Vec::new();
+    let mut current_finding = String::new();
+    let mut current_assessment = String::new();
+    let mut current_explanation = String::new();
+    let mut in_explanation = false;
 
-    if false_positive_indicators
-        .iter()
-        .any(|&indicator| lower_text.contains(indicator))
-    {
-        "False positive"
-    } else if valid_vulnerability_indicators
-        .iter()
-        .any(|&indicator| lower_text.contains(indicator))
-    {
-        "Valid"
-    } else {
-        "Unknown"
+    for line in text.lines() {
+        if line.starts_with("Finding: ") {
+            if !current_finding.is_empty() {
+                findings_explanations
+                    .push((current_assessment.clone(), current_explanation.clone()));
+            }
+            current_finding = line.to_string();
+            current_assessment.clear();
+            current_explanation.clear();
+            in_explanation = false;
+        } else if line.starts_with("Assessment: ") {
+            current_assessment = line.replace("Assessment: ", "").trim().to_string();
+            in_explanation = false;
+        } else if line.starts_with("Explanation: ") {
+            current_explanation = line.replace("Explanation: ", "").trim().to_string();
+            in_explanation = true;
+        } else if in_explanation {
+            if !current_explanation.is_empty() {
+                current_explanation.push('\n');
+            }
+            current_explanation.push_str(line.trim());
+        }
     }
+
+    if !current_finding.is_empty() {
+        findings_explanations.push((current_assessment, current_explanation));
+    }
+
+    findings_explanations
+}
+
+pub async fn generate_summary(
+    openai_creds: &OpenAICreds,
+    findings: &[(String, Vec<VulnerabilityResult>)],
+    model: &str,
+    rate_limiter: &RateLimiter,
+) -> Result<String, MyError> {
+    let client = Client::new();
+    let findings_summary = findings
+        .iter()
+        .flat_map(|(_, v)| v)
+        .map(|v| {
+            format!(
+                "File: {}\nLine: {}\nID: {}\nSeverity: {}\nDescription: {}\n\n",
+                v.file, v.line_number, v.vulnerability_id, v.severity, v.description
+            )
+        })
+        .collect::<String>();
+
+    let prompt = format!(
+        "Here are the findings from a Static Application Security Testing (SAST) tool:\n\n{}\nPlease provide a concise summary of these findings.",
+        findings_summary
+    );
+
+    let chat_request = ChatRequest {
+        model: model.to_string(),
+        messages: vec![Message {
+            role: "user".to_string(),
+            content: prompt,
+        }],
+    };
+
+    let response =
+        send_request_with_retries(&client, &openai_creds, &chat_request, 10, rate_limiter)
+            .await
+            .map_err(|e| {
+                warn!("Failed to send request to OpenAI: {}", e);
+                MyError::custom("Failed to send request to OpenAI")
+            })?;
+
+    let summary = response
+        .choices
+        .get(0)
+        .map_or_else(|| "".to_string(), |choice| choice.message.content.clone());
+
+    Ok(summary)
 }
