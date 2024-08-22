@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+    .markdown-summary {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: gpt-4o-mini</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='markdown-summary'>
+        <h3>Summary of Static Application Security Testing (SAST) Findings</h3>
+<h4><strong>High-Severity Vulnerabilities:</strong></h4>
+<ol>
+<li><strong>Unauthorized Modifications:</strong>
+<ul>
+<li>Ensure the expected signer account has signed (ID: VULN008).</li>
+<li>Validate that state accounts are writable (ID: VULN009).</li>
+<li>Verify the owner of state accounts to prevent fake data injection (ID: VULN010).</li>
+<li>These issues were found on multiple lines (35, 36, 37, 38, 39, 40, 84, 85, 86, 87, 88, 118, 119, 120, 121, 122, 123).</li>
+</ul>
+</li>
+</ol>
+<h4><strong>Medium-Severity Vulnerabilities:</strong></h4>
+<ol start="2">
+<li>
+<p><strong>Boundary Checks:</strong></p>
+<ul>
+<li>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows (ID: Rust-Solana007).</li>
+<li>Found on several lines (22, 23, 59, 90, 132).</li>
+</ul>
+</li>
+<li>
+<p><strong>Error Handling:</strong></p>
+<ul>
+<li>Unwrapping a <code>Result</code> or <code>Option</code> without error handling can lead to panic (ID: RUST002).</li>
+<li>Overuse of <code>unwrap()</code> or <code>expect()</code> can lead to issues; prefer <code>match</code> or <code>if let</code> (IDs: RUST024, Rust-Solana002).</li>
+<li>These were observed on lines (69, 103, 145).</li>
+</ul>
+</li>
+</ol>
+<h4><strong>Low-Severity Vulnerabilities:</strong></h4>
+<ol start="4">
+<li><strong>Performance Issues:</strong>
+<ul>
+<li>Cloning large data structures can cause performance issues due to excessive memory use (ID: Rust-Solana008).</li>
+<li>Found on various lines (58, 71, 72, 73, 74, 105, 106, 107, 108, 147, 148, 149, 150).</li>
+</ul>
+</li>
+</ol>
+<h3>Conclusion:</h3>
+<p>The SAST findings highlight several critical and medium-level vulnerabilities mainly relating to inadequate validation of signer accounts, insufficient boundary checks on arrays and vectors, and improper error handling. Performance issues were also flagged due to unnecessary cloning of large data structures. Addressing these vulnerabilities is essential to enhance the security and efficiency of the application.</p>
+
+    </div>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            <tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 35</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 35</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 35</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 36</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 36</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 36</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 37</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 37</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 37</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 38</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 38</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 38</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 39</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 39</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 39</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 40</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 40</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 40</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 84</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 84</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 84</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 85</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 85</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 85</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 86</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 86</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 86</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 120</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 120</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 120</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 121</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 121</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 121</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 122</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 122</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 122</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 123</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 123</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 123</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 22</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 23</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 59</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 90</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 103</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 103</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 103</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 132</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 145</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 145</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 145</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 152</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 58</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 71</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 72</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 73</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 74</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 108</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 147</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 148</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 149</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level4/src/processor.rs</td>
+                <td>Line: 150</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Reiterating the necessity of verifying user permissions and executing audits to ensure secure interactions with the contract.</td>  <!-- Add explanation column -->
+            </tr>
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{"Low":13,"Medium":15,"High":51}');
+        var totalValid = 79;
+        var totalInvalid = 0;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

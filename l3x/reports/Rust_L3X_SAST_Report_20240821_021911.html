@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+    .markdown-summary {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: gpt-4o-mini</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='markdown-summary'>
+        <p>Sure! Please share the findings from your Static Application Security Testing (SAST) tool, and I'll provide you with a concise summary.</p>
+
+    </div>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{}');
+        var totalValid = 0;
+        var totalInvalid = 0;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

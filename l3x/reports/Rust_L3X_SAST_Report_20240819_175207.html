@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+    .markdown-summary {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: chatgpt-4o-latest</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='markdown-summary'>
+        <h3>Summary of SAST Findings</h3>
+<p>The SAST tool identified several security and performance issues within the Rust code of the Neodyme Breakpoint Workshop project. Below is a summary of the findings categorized by issue type:</p>
+<h4>1. <strong>Arithmetic Operations (Overflow/Underflow)</strong></h4>
+<ul>
+<li><strong>Lines Affected</strong>: <code>48</code>, <code>42</code>, <code>74</code>, <code>79</code>, <code>92</code>, <code>96</code>, <code>111</code>, <code>112</code>, <code>118</code>, <code>119</code>.</li>
+<li><strong>Severity</strong>: Medium to High (RUST003, RUST021).</li>
+<li><strong>Description</strong>: Multiple instances of arithmetic operations that may cause overflow or underflow without being properly checked.</li>
+</ul>
+<h4>2. <strong>Array/Vector Indexing Without Bounds Checking</strong></h4>
+<ul>
+<li><strong>Lines Affected</strong>: <code>17</code>, <code>18</code>, <code>54</code>, <code>69</code>.</li>
+<li><strong>Severity</strong>: Medium (Rust-Solana007).</li>
+<li><strong>Description</strong>: Accessing arrays or vectors without boundary checks, potentially resulting in panics or buffer overflows.</li>
+</ul>
+<h4>3. <strong>Signatures and Account Permissions</strong></h4>
+<ul>
+<li><strong>Lines Affected</strong>: <code>29</code>, <code>30</code>, <code>31</code>, <code>32</code>, <code>87</code>, <code>88</code>, <code>89</code>, <code>104</code>, <code>105</code>, <code>106</code>, <code>107</code>.</li>
+<li><strong>Severity</strong>: High (VULN008, VULN009, VULN010).</li>
+<li><strong>Description</strong>: Multiple instances where signatures, writable attributes, and ownership of blockchain state accounts are not sufficiently validated, leaving the system vulnerable to unauthorized modifications and data injection.</li>
+</ul>
+<h4>4. <strong>Memory Allocation and Cloning</strong></h4>
+<ul>
+<li>
+<p><strong>Lines Affected</strong>: <code>53</code>, <code>65</code>, <code>96</code>.</p>
+</li>
+<li>
+<p><strong>Severity</strong>: High (Rust-Solana006).</p>
+</li>
+<li>
+<p><strong>Description</strong>: Memory allocations based on untrusted input sizes could lead to Denial of Service (DoS) through memory exhaustion.</p>
+</li>
+<li>
+<p><strong>Lines Affected</strong>: <code>53</code>, <code>65</code>, <code>96</code>.</p>
+</li>
+<li>
+<p><strong>Severity</strong>: Low (Rust-Solana008).</p>
+</li>
+<li>
+<p><strong>Description</strong>: Cloning large data structures, which could lead to performance issues due to excessive memory usage.</p>
+</li>
+</ul>
+<h4>5. <strong>Unchecked Unwrapping (<code>unwrap()</code>/<code>expect()</code>)</strong></h4>
+<ul>
+<li><strong>Line Affected</strong>: <code>80</code>.</li>
+<li><strong>Severity</strong>: Medium (RUST002, RUST024, Rust-Solana002).</li>
+<li><strong>Description</strong>: Instances of <code>unwrap()</code> and <code>expect()</code> being used without adequate error handling, which could cause the program to panic.</li>
+</ul>
+<h3>Conclusion</h3>
+<p>The report reveals multiple security vulnerabilities, especially related to unchecked arithmetic operations, array bounds checking, improper validation of account signatures, and inadequate memory management. Addressing these findings would significantly improve the robustness and security of the code.</p>
+
+    </div>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            <tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 29</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 29</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 29</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 30</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 30</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 30</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 42</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana006</td>
+                <td>[Rust-Solana] Potential DoS Vulnerabilities</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 53</td>
+                <td>Allocations based on untrusted input sizes can lead to DoS via memory exhaustion.</td>
+                <td>Validate input sizes before allocations and use bounded collections. Consider rate-limiting or other mitigation strategies.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana006</td>
+                <td>[Rust-Solana] Potential DoS Vulnerabilities</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 65</td>
+                <td>Allocations based on untrusted input sizes can lead to DoS via memory exhaustion.</td>
+                <td>Validate input sizes before allocations and use bounded collections. Consider rate-limiting or other mitigation strategies.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 74</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 79</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 89</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 89</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 89</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 92</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana006</td>
+                <td>[Rust-Solana] Potential DoS Vulnerabilities</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 96</td>
+                <td>Allocations based on untrusted input sizes can lead to DoS via memory exhaustion.</td>
+                <td>Validate input sizes before allocations and use bounded collections. Consider rate-limiting or other mitigation strategies.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 104</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 104</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 104</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 111</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 112</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 17</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 18</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 42</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 54</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 74</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 79</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 80</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 80</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 80</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 92</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 111</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 112</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 53</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 65</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 96</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>`assert_eq!` being used poses a potential threat wherein unwanted panics during live contract execution can result in interruptions. Transition to methodic error handling preferred.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🔴 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/lib.rs</td>
+                <td>Line: 48</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>The `RUST021` finding generally concerns the inappropriate use of sensitive data or constructs that might inadvertently influence cryptographic operations. The `find_program_address` method is a widely used function in the Solana ecosystem for generating Program Derived Addresses (PDAs) securely. It is not subject to misuse that could corrupt or expose cryptographic constructs, as it is designed specifically to avoid collisions and ensure address uniqueness within specific contexts. Since this pattern is a standard in Solana programs and does not pose any specific security risk, this finding is a false positive.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🔴 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/lib.rs</td>
+                <td>Line: 48</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>The `RUST021` finding generally concerns the inappropriate use of sensitive data or constructs that might inadvertently influence cryptographic operations. The `find_program_address` method is a widely used function in the Solana ecosystem for generating Program Derived Addresses (PDAs) securely. It is not subject to misuse that could corrupt or expose cryptographic constructs, as it is designed specifically to avoid collisions and ensure address uniqueness within specific contexts. Since this pattern is a standard in Solana programs and does not pose any specific security risk, this finding is a false positive.</td>  <!-- Add explanation column -->
+            </tr>
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{"Low":3,"Medium":15,"High":44}');
+        var totalValid = 62;
+        var totalInvalid = 2;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

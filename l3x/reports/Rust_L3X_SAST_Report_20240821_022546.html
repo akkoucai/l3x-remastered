@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+    .markdown-summary {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: gpt-4o-mini</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='markdown-summary'>
+        <p>The Static Application Security Testing (SAST) tool has identified several security vulnerabilities and potential issues in the Rust file located at <code>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</code>. Here's a concise summary of the findings:</p>
+<h3>High Severity Issues</h3>
+<ol>
+<li>
+<p><strong>Vulnerability Checks</strong>:</p>
+<ul>
+<li>Multiple instances (lines 31, 32, 33, 68, 69, 84, 85, 86, 87) of high-severity issues related to:
+<ul>
+<li>Ensuring the expected signer account has actually signed (VULN008).</li>
+<li>Checking state accounts as writable to prevent unauthorized modifications (VULN009).</li>
+<li>Verifying the owner of state accounts to prevent fake data injection (VULN010).</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>
+<p><strong>Arithmetic Operations</strong>:</p>
+<ul>
+<li>Lines 38, 55, 59, 93, 101, 102, and 105 raise concerns about arithmetic operations that could overflow or underflow without proper checks (RUST021).</li>
+</ul>
+</li>
+</ol>
+<h3>Medium Severity Issues</h3>
+<ol>
+<li>
+<p><strong>Array Access</strong>:</p>
+<ul>
+<li>Accessing arrays or vectors without boundary checks on lines 18, 19, 51 can lead to panics or buffer overflows (Rust-Solana007).</li>
+</ul>
+</li>
+<li>
+<p><strong>Error Handling</strong>:</p>
+<ul>
+<li>Unwrapping a Result or Option without proper error handling on lines 60, 106, which may lead to panic (RUST002).</li>
+<li>Overusing <code>unwrap()</code> or <code>expect()</code> which can lead to panics (RUST024, Rust-Solana002).</li>
+</ul>
+</li>
+</ol>
+<h3>Low Severity Issues</h3>
+<ol>
+<li><strong>Performance Concerns</strong>:
+<ul>
+<li>Cloning large data structures can lead to performance issues due to excessive memory use on lines 50 and 75 (Rust-Solana008).</li>
+</ul>
+</li>
+</ol>
+<h3>Summary</h3>
+<p>The primary areas of concern involve ensuring appropriate signer checks and state account verifications to prevent unauthorized modifications, which are classified as high severity. Additionally, there are several potential overflow issues tied to arithmetic operations and inadequate error handling practices concerning the use of <code>unwrap()</code>. Performance issues related to cloning large data structures have also been noted. Addressing these findings is crucial to enhance the security and stability of the application.</p>
+
+    </div>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            <tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 33</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 33</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 33</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 38</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 55</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 59</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 68</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 68</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 68</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 84</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 84</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 85</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 85</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 86</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 86</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Missing Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 93</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 101</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 102</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 18</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 19</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 51</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 60</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 60</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 60</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 50</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level2/src/processor.rs</td>
+                <td>Line: 75</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>This alerts potential pitfalls concerning immutable and mutable resources in the contract. Ineffective management could lead to poorly handled transactions. Proper structuring must be enforced here to maintain robustness.</td>  <!-- Add explanation column -->
+            </tr>
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{"Medium":9,"Low":2,"High":30}');
+        var totalValid = 41;
+        var totalInvalid = 0;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

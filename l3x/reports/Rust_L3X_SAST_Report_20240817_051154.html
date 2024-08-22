@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='UTF-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+    <title>Vulnerability Report</title>
+    <script src='https://cdn.jsdelivr.net/npm/chart.js'></script>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 20px;
+        background-color: #f0f2f5;
+    }
+    h1, h2 {
+        color: #333;
+    }
+    table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    th, td {
+        padding: 8px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+    tr:hover {background-color: #f5f5f5;}
+    th {
+        background-color: #04AA6D;
+        color: white;
+    }
+    .chart-container {
+        width: 400px;
+        display: inline-block;
+        margin: 20px;
+    }
+    .charts-wrapper {
+        text-align: center;
+    }
+    .markdown-summary {
+        padding: 10px;
+        background-color: #fff;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+    }
+</style>
+</head>
+<body>
+    <header>
+        <h1>L3X - Static Application Security Testing (SAST) Report</h1>
+        <p>Technology: Rust</p>
+        <p>Validation model: gpt-4o-mini-2024-07-18</p>
+        <p>Check more on: <a href='https://vulnplanet.com/'>VulnPlanet</a><br>Contribute: <a href='https://github.com/VulnPlanet/l3x'>GitHub</a></p>
+    </header>
+    <section>
+    <h2>Summary</h2>
+    <div class='markdown-summary'>
+        <h3>Summary of Static Application Security Testing (SAST) Findings</h3>
+<h4>General Overview</h4>
+<p>The analysis of the Rust code in the project has revealed several potential security vulnerabilities and issues, primarily related to arithmetic operations, access controls, and array handling. The findings are categorized based on severity: High, Medium, and Low.</p>
+<h4>High Severity Issues</h4>
+<ol>
+<li><strong>Arithmetic Operations</strong>: Lines 48, 42, 74, 79, 92, 111, and 112 raise concerns about unchecked arithmetic operations that may lead to overflow/underflow (IDs: RUST021).</li>
+<li><strong>Access Control Vulnerabilities</strong>:
+<ul>
+<li>Verification of expected signer accounts and state accounts for modifications (Lines 29, 30, 31, 87, 88, 89, 104, 105, 106, 107).</li>
+<li>Ensuring the state accounts are checked as writable and confirming the owner to prevent data injection (Multiple lines, primarily 29-32 and 87-89).</li>
+</ul>
+</li>
+</ol>
+<h4>Medium Severity Issues</h4>
+<ol>
+<li><strong>Arithmetic Operations</strong>: Similar to high severity, but less critical instances noted at various lines (IDs: RUST003).</li>
+<li><strong>Array Access Without Boundary Checks</strong>: Multiple instances at lines 17, 18, 54, 65, 69, indicating potential buffer overflow risks (ID: Rust-Solana007).</li>
+<li><strong>Unwrapping Results/Options</strong>: Line 80 highlights the overuse of <code>unwrap()</code> or <code>expect()</code>, which can lead to panics without proper error handling (IDs: RUST002, RUST024).</li>
+</ol>
+<h4>Low Severity Issues</h4>
+<ol>
+<li><strong>Memory Management Concerns</strong>: Lines 53 and 65 indicate potential performance issues from cloning large data structures (IDs: Rust-Solana008).</li>
+<li><strong>Memory Exhaustion Risks</strong>: Lines 53 and 96 involve allocations based on untrusted input sizes that may lead to Denial of Service (ID: Rust-Solana006).</li>
+</ol>
+<h3>Suggested Actions</h3>
+<ul>
+<li>Implement checks for arithmetic operations to prevent overflows or underflows.</li>
+<li>Ensure proper validation of signer accounts and state account ownership before modifications.</li>
+<li>Introduce boundary checks before accessing array elements.</li>
+<li>Substitute <code>unwrap()</code> and <code>expect()</code> with proper error handling techniques such as <code>match</code> or <code>if let</code>.</li>
+<li>Review and optimize memory allocation, especially for user-provided sizes. </li>
+</ul>
+<p>Addressing the high-severity issues should be prioritized to enhance the overall security posture of the application.</p>
+
+    </div>
+    <div class='chart-container'>
+        <h3>By Severity</h3>
+        <canvas id='severityChart'></canvas>
+    </div>
+    <div class='chart-container'>
+        <h3>False Positive Rate</h3>
+        <canvas id='falsePositiveChart'></canvas>
+    </div>
+</section>
+    <section>
+        <h2>Vulnerabilities</h2>
+        <p>🟢 GPT 3.5/4.0 - Valid or Not possible to determine</p>
+        <p>🔴 GPT 3.5/4.0 - False Positive</p>
+        <p>- - No validation</p>
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Severity</th>
+                <th>File</th>
+                <th>Line number</th>
+                <th>Description</th>
+                <th>Details</th>
+                <th>Explanation</th>  <!-- Add explanation column -->
+            </tr>
+            <tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/lib.rs</td>
+                <td>Line: 48</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>RUST021 warns about the use of a variable (in this case, the `amount` parameter within the `deposit` and `withdraw` functions) without proper validation. If there is no check to ensure the value of `amount` is positive and less than or equal to the balance, it could lead to unexpected behavior, such as attempting to withdraw more than available. Implementing validity checks on the `amount` before processing transactions is crucial. For example, check if the `amount` exceeds the current balance in the vault for withdrawal or if it is greater than zero before making a deposit. Additionally, consider adding checks for overflow or underflow if any arithmetic operations on `amount` are performed.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 29</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>This vulnerability points out that user input may not be validated, particularly in the context of unsecured funds being transferred in the deposit and withdraw processes. Ensuring that input values are validated can prevent unauthorized asset manipulation.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 29</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This relates to cryptographic operations, where insufficient attention to nonce or signature validation could lead to replay attacks or similar vulnerabilities. The function does not check whether the transactions are original or valid.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 29</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This finding likely indicates that there might be a lack of validation in the transfer process, increasing the risk of overflows or incorrect memory manipulations. Validating the amount before operations help prevent such vulnerabilities.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 30</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>The same concerns apply regarding the unvalidated input for both deposits and withdrawals. Lack of verification on these input values increases the risk of exploitation which needs to be addressed.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 30</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>The concern here relates to potential vulnerabilities during cryptographic operations linked with user input and could allow malicious actors to manipulate transactions improperly.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 30</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Indicates that there may be safety issues surrounding possible integer overflows or related vulnerabilities during financial transactions. Proper input checks are critical to mitigate risks associated with financial handling.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reiterates the lack of input validation noticed in prior findings. It's crucial to validate amounts being deposited or withdrawn to prevent exploits.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Reinforces the importance of checking cryptographic operations and user authorization verification to mitigate replay attacks.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 31</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This likely highlights risks of inadequate checks against the amounts being manipulated, increasing risks of errors or exploits in financial operations.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>More concerns regarding the lack of validation, echoing previous findings. Strong checks should be in place before processing any financial transaction.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Echoing previous concerns related to the integrity of cryptographic processes, which require stringent checks to ensure no malicious activity can influence them.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 32</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Similar to before, suggests vulnerability due to lack of checks on integer handling. This needs improvements to avoid risks associated with large or invalid numbers.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 42</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>This warning is related to unsafe code practices and indicates potential risks associated with borrowing. All mutable references should be clearly managed.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana006</td>
+                <td>[Rust-Solana] Potential DoS Vulnerabilities</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 53</td>
+                <td>Allocations based on untrusted input sizes can lead to DoS via memory exhaustion.</td>
+                <td>Validate input sizes before allocations and use bounded collections. Consider rate-limiting or other mitigation strategies.</td>
+                <td>This finding suggests a possible unsafe action when transferring funds or data. Ensuring all actions comply with security practices is vital.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana006</td>
+                <td>[Rust-Solana] Potential DoS Vulnerabilities</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 65</td>
+                <td>Allocations based on untrusted input sizes can lead to DoS via memory exhaustion.</td>
+                <td>Validate input sizes before allocations and use bounded collections. Consider rate-limiting or other mitigation strategies.</td>
+                <td>Similar concerns arise around unsafe operations in the vault handling process. All external transactions must be handled carefully to prevent vulnerabilities.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 74</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Points out unsafe code practices in borrowing actions. Consider re-structuring code to respect Rust's ownership model.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 79</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Reinforces points about lifetime and borrowing safety in the code. This must be checked thoroughly to maintain Rust’s memory safety guarantees.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>The same concerns about input validation raised further. Ensure thorough validation processes to ensure data integrity.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Again, this relates to cryptographic processes needing stringent checks to prevent unauthorized manipulations.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 87</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Similar concerns about integer overflow and handling economic values. It is critical to validate all handled values accurately.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Continues to emphasize the lack of validations as a critical vulnerability that needs addressing.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Similar points related to potential cryptography errors and unintended access to funds. This needs validation before proceeding.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 88</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Points to integer handling potentially leading to vulnerabilities. The code must ensure that values are checked before being utilized.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 89</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Reinforces input validation warnings noted in earlier findings.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 89</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Highlights concerns connected to cryptographic process vulnerabilities in the withdrawals. Ensure robust checks are in place.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 89</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Similar to before, suggests risks according to handling sensitive values without checks. Proper validations are a necessity.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 92</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Similar to other points about potential mismanagement of risky memory operations, require thorough checks.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana006</td>
+                <td>[Rust-Solana] Potential DoS Vulnerabilities</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 96</td>
+                <td>Allocations based on untrusted input sizes can lead to DoS via memory exhaustion.</td>
+                <td>Validate input sizes before allocations and use bounded collections. Consider rate-limiting or other mitigation strategies.</td>
+                <td>Indicates potential issues arising from unsafe interactions. Emphasizes the importance of handling external calls with caution.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 104</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Points to a lack of validation issues similar to noted vulnerabilities, warrant careful input checks.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 104</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Indicates ongoing concerns with the risk of improper access due to insufficient transaction validations.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 104</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Calling out ongoing issues with financial integrity. Strong checks are necessary at all points of financial transaction handling.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Continues to emphasize the high risks associated with failing to validate inputs before processing transactions.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>This reiterates the point about insufficient checks on crypto processing, emphasizing the necessity to ensure secure transaction boundaries.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 105</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Re-emphasizes the issues with value handling, ensuring rigorous checks before executing financial actions.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Further stresses the concerns of input validation that have been established in earlier findings.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Continues to emphasize the need for strengthening validation of cryptographic operations to shield against potential exploits.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 106</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>Points to ongoing challenges with the handling of financial value integrity. Require strong input and state validations.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN008</td>
+                <td>[Rust-Solana] Account Signer Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Ensure the expected signer account has actually signed to prevent unauthorized account modifications.</td>
+                <td>Verify `is_signer` is true for transactions requiring signatures.</td>
+                <td>Indicates persistent concerns about risk management in the encoding of user inputs that should be unified with rigorous validation.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN009</td>
+                <td>[Rust-Solana] Account Writable Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Ensure state accounts are checked as writable to prevent unauthorized modifications.</td>
+                <td>Verify `is_writable` is true for accounts that should be modified.</td>
+                <td>Enforces the need for proper checks within cryptographic operations to harden the program against exploitative attacks or misuse.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>VULN010</td>
+                <td>[Rust-Solana] Account Owner or Program ID Check</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 107</td>
+                <td>Verify the owner of state accounts to prevent fake data injection by malicious programs.</td>
+                <td>Check the account's owner matches the expected program ID.</td>
+                <td>This finding reiterates potential issues with improper handling of values akin to previously discussed issues. Input validation is paramount.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 111</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Focuses on adhering to Rust's memory safety rules when using references. Potential safety issues persist due to lack of management practices.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 112</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Indicates the need for strict adherence to memory safety practicum, ensuring borrowing rules are continually enforced.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Reinforces the idea that ownership and borrowing constraints need to be maintained to assure stability and safety in memory practices.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST021</td>
+                <td>[Rust] Numeric overflow or underflow</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>High</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Ongoing emphasis on the need for practices that respect Rust's ownership model, critical to ensure memory safety in the application.</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/lib.rs</td>
+                <td>Line: 48</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>RUST003 is a warning indicating that a panic may occur if a method fails. In this context, it refers to the use of `unwrap()` on the result of `try_to_vec()`. If the serialization fails for any reason (such as invalid data), the program will panic and terminate. This is particularly dangerous in a smart contract context where unexpected panics can lead to loss of funds or state inconsistency. To fix this, it's advisable to handle errors gracefully. Instead of calling `unwrap()`, consider using pattern matching or the `?` operator to propagate errors properly.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 17</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>This warning indicates that the program might access uninitialized data. In the initialize function, wallet_info.data is used for serialization without ensuring that it's appropriately initialized. It may lead to undefined behavior or security vulnerabilities, as uninitialized memory can contain sensitive data.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 18</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Similar to the previous finding, this warning suggests potential access to uninitialized memory when creating the vault account. Before invoking any operations on this account, it is critical to ensure that the account's data is initialized to prevent security issues.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 42</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Indicates potential code safety issues that may arise from data borrowing without consideration of ownership rules in Rust. Validate inputs carefully and check for borrowing conflicts.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 54</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>It highlights potential access to uninitialized data, similar to prior findings. Ensure all data is initialized before access to avoid vulnerabilities related to memory state.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana007</td>
+                <td>[Rust-Solana] Missing Boundary Checks</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 69</td>
+                <td>Accessing arrays or vectors without boundary checks can lead to panics or buffer overflows.</td>
+                <td>Use `.get()` or `.get_mut()` for safe access with bounds checking, and handle the Option result appropriately.</td>
+                <td>Potential issues associated with accessing uninitialized data or state. Especially in the withdrawal process, ensure data validity before any transactions.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 74</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Indicates possible conflicts in borrow checking, which might lead to unsafe states. Managing lifetimes and ownership accurately is critical to avoid safety issues.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 79</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Similar to earlier concerns about borrow checking and possible conflicts in data states. Ensure careful management of references.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST002</td>
+                <td>[Rust] Unhandled error</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 80</td>
+                <td>Unwrapping a Result or Option without proper error handling can lead to panic.</td>
+                <td>Use `match` or `if let` to handle the `Result` or `Option` properly, or use `?` to propagate the error.</td>
+                <td>Suggests the use of unsafe blocks or operations; ensuring proper use of safe Rust can mitigate risks significantly in the application.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST024</td>
+                <td>[Rust] Improper error handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 80</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Indicates issues related to concurrency and how shared data is accessed. Implement locks or use channels to ensure safe concurrent access.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana002</td>
+                <td>[Rust-Solana] Improper Error Handling</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 80</td>
+                <td>Overuse of `unwrap()` or `expect()` can lead to panics. Prefer using error handling mechanisms like `match` or `if let`.</td>
+                <td>Replace `unwrap()` and `expect()` with proper error handling to prevent unexpected panics in production code.</td>
+                <td>Raises security concerns regarding data handling and operating consequence. Ensuring defined limitations and controls over data can prevent vulnerabilities.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 92</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>The point reiterates previous warnings regarding borrow checking issues that could lead to unsafe memory conditions.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 111</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Highlights potential issues of improper data borrowing similar to established findings, ensuring careful data management practices.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 112</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Consistent with prior warnings about data borrowing challenges indicating improper handling would lead to unsafe execution paths.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 118</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Similar concerns have emerged regarding borrow checking issues observed on multiple occasions, warranting immediate attention.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>RUST003</td>
+                <td>[Rust] Unchecked arithmetic</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Medium</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 119</td>
+                <td>Arithmetic operations that can overflow or underflow without being checked.</td>
+                <td>Use checked arithmetic methods like `checked_add`, `checked_sub`, `checked_mul`, and `checked_div`.</td>
+                <td>Continuation of the focus on borrowing and memory access rules that, if ignored, could severely impact application safety.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 53</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>This warning raises concerns about the possibility of race conditions or reentrancy issues when invoking external accounts. Implementing non-reentrant patterns can mitigate this risk.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 65</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>This indicates a risk of unsafe code paths which can lead to race conditions or unintended backdoor entries. Strong modification and transaction management practices are necessary.
+</td>  <!-- Add explanation column -->
+            </tr><tr>
+                <td>Rust-Solana008</td>
+                <td>[Rust-Solana] Unnecessary Cloning of Large Data Structures</td>
+                <td>🟢 GPT 3.5/4</td>
+                <td>Low</td>
+                <td>/home/mihtonmi/dev/sharky/neodyme-breakpoint-workshop/level0/src/processor.rs</td>
+                <td>Line: 96</td>
+                <td>Cloning large data structures can lead to performance issues due to excessive memory use.</td>
+                <td>Prefer borrowing or using reference-counted types like `Rc` or `Arc` to share data without deep copying.</td>
+                <td>Similar to prior warnings, calls for careful practices to prevent vulnerabilities due to race conditions during external calls.
+</td>  <!-- Add explanation column -->
+            </tr>
+        </table>
+    </section>
+    <section>
+        <h2>Safe Patterns Overview</h2>
+        <table>
+            <tr>
+                <th>Pattern ID</th>
+                <th>Title</th>
+                <th>Safe Pattern</th>
+            </tr>
+            
+        </table>
+    </section>
+    <script>
+        var severityData = JSON.parse('{"Low":3,"Medium":16,"High":45}');
+        var totalValid = 64;
+        var totalInvalid = 0;
+
+        var severityCtx = document.getElementById('severityChart').getContext('2d');
+        var falsePositiveCtx = document.getElementById('falsePositiveChart').getContext('2d');
+
+        new Chart(severityCtx, {
+            type: 'bar',
+            data: {
+                labels: Object.keys(severityData),
+                datasets: [{
+                    label: 'Count',
+                    data: Object.values(severityData),
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        new Chart(falsePositiveCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Valid', 'False Positive'],
+                datasets: [{
+                    label: 'Rate',
+                    data: [totalValid, totalInvalid],
+                    backgroundColor: [
+                        'rgba(75, 192, 192, 0.5)',
+                        'rgba(255, 99, 132, 0.5)'
+                    ],
+                    borderColor: [
+                        'rgba(75, 192, 192, 1)',
+                        'rgba(255, 99, 132, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+        });
+    </script>
+</body>
+</html>

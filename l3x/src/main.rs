@@ -44,7 +44,7 @@ async fn main() -> Result<(), MyError> {
         .arg(Arg::with_name("model")
              .long("model")
              .value_name("MODEL")
-             .help("OpenAI model GPT-3.5 or GPT-4 to use for vulnerability validation (default is gpt-4o-mini-2024-07-18)")
+             .help("OpenAI model GPT-3.5 or GPT-4 to use for vulnerability validation (default is chatgpt-4o-latest)")
              .takes_value(true))
         .arg(Arg::with_name("no_validation")
              .long("no-validation")
@@ -57,9 +57,7 @@ async fn main() -> Result<(), MyError> {
         api_key: std::env::var("OPENAI_API_KEY").expect("OPENAI_API_KEY must be set"),
     };
     let validate_all_severities = matches.is_present("all_severities");
-    let model = matches
-        .value_of("model")
-        .unwrap_or("gpt-4o-mini-2024-07-18");
+    let model = matches.value_of("model").unwrap_or("chatgpt-4o-latest");
     let no_validation = matches.is_present("no_validation");
 
     info!("Validation model: {}", model);
@@ -280,6 +278,8 @@ async fn process_file(
     // Group findings per file
     let mut findings_by_file = Vec::new();
     let mut in_block_comment = false;
+    let mut struct_block = String::new();
+    let mut in_struct_definition = false;
 
     for (line_number, line) in file_content.lines().enumerate() {
         let trimmed_line = line.trim();
@@ -300,23 +300,81 @@ async fn process_file(
             continue;
         }
 
-        // Skip import statements, function signatures, and struct definitions
-        if trimmed_line.starts_with("use ")
-            || trimmed_line.starts_with("extern crate ")
-            || trimmed_line.ends_with("-> Result<()> {")
-            || trimmed_line.ends_with("-> Self {")
-            || trimmed_line.starts_with("fn ")
-            || trimmed_line.ends_with("{")
-            || trimmed_line.ends_with("}")
-        {
+        // Detect the start of a struct definition
+        if trimmed_line.starts_with("struct ") {
+            in_struct_definition = true;
+            log::info!(
+                "Detected start of struct at line {}: {}",
+                line_number + 1,
+                trimmed_line
+            );
+        }
+
+        // Accumulate lines if inside a struct definition
+        if in_struct_definition {
+            struct_block.push_str(trimmed_line);
+            struct_block.push_str(" ");
+
+            // Check if the struct definition ends
+            if trimmed_line.ends_with("}") {
+                in_struct_definition = false;
+                log::info!("Struct block: {}", struct_block);
+                // Process the entire struct definition
+                for check in checks.iter().filter(|c| c.language == language) {
+                    let pattern_regex = Regex::new(&check.pattern).map_err(MyError::from)?;
+                    let safe_pattern_regex = check
+                        .safe_pattern
+                        .as_ref()
+                        .and_then(|sp| Regex::new(sp).ok());
+
+                    // Check for the presence of the pattern in the accumulated block
+                    if pattern_regex.is_match(&struct_block) {
+                        findings_by_file.push((
+                            line_number + 1,
+                            check.id.clone(),
+                            check.severity.clone(),
+                            check.suggested_fix.clone(),
+                        ));
+                        log::info!(
+                            "Vulnerability found in struct block at line {}: {}",
+                            line_number + 1,
+                            struct_block
+                        );
+                    }
+
+                    // Check for the presence of the safe pattern
+                    if let Some(safe_regex) = &safe_pattern_regex {
+                        if safe_regex.is_match(&struct_block) {
+                            log::info!(
+                                "Safe pattern found in struct block at line {}: {}",
+                                line_number + 1,
+                                struct_block
+                            );
+                            let entry = safe_patterns_overview
+                                .entry(check.id.clone())
+                                .or_insert_with(|| SafePatternDetail {
+                                    pattern_id: check.id.clone(),
+                                    title: check.title.clone(),
+                                    safe_pattern: check.safe_pattern.clone().unwrap_or_default(),
+                                    occurrences: 0,
+                                    files: vec![],
+                                });
+
+                            entry.occurrences += 1;
+                            if !entry.files.contains(&path.to_string_lossy().to_string()) {
+                                entry.files.push(path.to_string_lossy().to_string());
+                            }
+                        }
+                    }
+                }
+
+                // Reset struct block for the next possible struct
+                struct_block.clear();
+            }
             continue;
         }
 
-        // Skip dereferencing operations
-        if trimmed_line.contains("::") || trimmed_line.contains("->") {
-            continue;
-        }
-
+        // Apply the existing logic to other lines as before
         for check in checks.iter().filter(|c| c.language == language) {
             let pattern_regex = Regex::new(&check.pattern).map_err(MyError::from)?;
             let safe_pattern_regex = check
@@ -325,21 +383,18 @@ async fn process_file(
                 .and_then(|sp| Regex::new(sp).ok());
 
             // Check for the presence of the pattern
-            if pattern_regex.is_match(line) {
-                // Ensure it's not a false positive by checking context (e.g., inside comments)
-                if !trimmed_line.starts_with("//") && !trimmed_line.starts_with("/*") {
-                    findings_by_file.push((
-                        line_number + 1,
-                        check.id.clone(),
-                        check.severity.clone(),
-                        check.suggested_fix.clone(),
-                    ));
-                }
+            if pattern_regex.is_match(trimmed_line) {
+                findings_by_file.push((
+                    line_number + 1,
+                    check.id.clone(),
+                    check.severity.clone(),
+                    check.suggested_fix.clone(),
+                ));
             }
 
             // Check for the presence of the safe pattern
             if let Some(safe_regex) = &safe_pattern_regex {
-                if safe_regex.is_match(line) {
+                if safe_regex.is_match(trimmed_line) {
                     let entry = safe_patterns_overview
                         .entry(check.id.clone())
                         .or_insert_with(|| SafePatternDetail {
